@@ -1,0 +1,14 @@
+{
+    "intervalo_segundos": 10,
+    "xibo": {
+      "base_url": "http://192.168.0.14",
+      "client_id": "TU_CLIENT_ID",
+      "client_secret": "TU_CLIENT_SECRET"
+    },
+    "plc": {
+      "db_numero": 1,
+      "direccion_byte": 0,
+      "longitud": 64
+    }
+  }
+  
