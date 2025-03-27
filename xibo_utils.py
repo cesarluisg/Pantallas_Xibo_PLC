@@ -35,8 +35,9 @@ def buscar_layout_por_etiquetas(config, token, grupo_pantallas, receta):
         layouts = response.json()
 
         for layout in layouts:
-            tags = layout.get("tags", [])
+            tags = [t['tag'] for t in layout.get("tags", [])]
             if grupo_pantallas in tags and receta in tags:
+
                 logging.info(f"Layout encontrado: ID {layout['layoutId']} - {layout['name']}")
                 return layout["layoutId"]
 
