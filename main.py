@@ -6,8 +6,9 @@ print("Fecha: 2025-03-24")
 import time
 import json
 import logging
-import snap7
-from snap7.util import get_string
+
+from plc_utils import leer_receta_desde_plc
+from xibo_utils import obtener_token_xibo, buscar_layout_por_etiquetas, asignar_layout_a_grupo
 
 # Configuración del log
 log_file = 'main.log'
@@ -40,28 +41,11 @@ def cargar_plcs_config():
         logging.exception("Error al cargar plcs_config.json")
         return []
 
-def leer_receta_desde_plc(ip, db_numero, db_offset, longitud):
-    client = snap7.client.Client()
-    try:
-        client.connect(ip, 0, 1)
-        if not client.get_connected():
-            logging.warning(f"No se pudo conectar a PLC en {ip}")
-            return None
-        
-        data = client.db_read(db_numero, db_offset, longitud)
-        receta = get_string(data, 0, longitud)
-        logging.info(f"Receta leída desde {ip}: {receta}")
-        return receta
-    except Exception as e:
-        logging.warning(f"Error al conectar o leer desde {ip}: {e}")
-        return None
-    finally:
-        try:
-            client.disconnect()
-        except:
-            pass
-
 def ciclo_de_lectura(config, lista_plcs):
+    token = obtener_token_xibo(config)
+    if not token:
+        return
+
     logging.info("Inicio de ciclo de lectura.")
     for plc in lista_plcs:
         nombre = plc['nombre']
@@ -70,11 +54,15 @@ def ciclo_de_lectura(config, lista_plcs):
         db = plc['db_numero']
         offset = plc['db_offset']
         longitud = plc['longitud']
+        display_group_id = plc.get('xibo_display_group_id')
 
         logging.info(f"Procesando {nombre} en {ip} (grupo {grupo})")
         receta = leer_receta_desde_plc(ip, db, offset, longitud)
         if receta:
             logging.info(f"Receta activa en {nombre}: {receta}")
+            layout_id = buscar_layout_por_etiquetas(config, token, grupo, receta)
+            if layout_id and display_group_id:
+                asignar_layout_a_grupo(config, token, layout_id, display_group_id)
         else:
             logging.warning(f"No se pudo obtener la receta de {nombre}")
     logging.info("Ciclo de lectura terminado.")
