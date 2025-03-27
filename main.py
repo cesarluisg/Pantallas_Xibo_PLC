@@ -8,7 +8,8 @@ import json
 import logging
 
 from plc_utils import leer_receta_desde_plc
-from xibo_utils import obtener_token_xibo, buscar_layout_por_etiquetas, asignar_layout_a_grupo
+from xibo_utils import obtener_token_xibo, buscar_layout_por_etiquetas, crear_evento_layout_para_grupo
+
 
 # Configuración del log
 log_file = 'main.log'
@@ -54,15 +55,15 @@ def ciclo_de_lectura(config, lista_plcs):
         db = plc['db_numero']
         offset = plc['db_offset']
         longitud = plc['longitud']
-        display_group_id = plc.get('xibo_display_group_id')
 
         logging.info(f"Procesando {nombre} en {ip} (grupo {grupo})")
         receta = leer_receta_desde_plc(ip, db, offset, longitud)
         if receta:
             logging.info(f"Receta activa en {nombre}: {receta}")
             layout_id = buscar_layout_por_etiquetas(config, token, grupo, receta)
-            if layout_id and display_group_id:
-                asignar_layout_a_grupo(config, token, layout_id, display_group_id)
+            if layout_id:
+                crear_evento_layout_para_grupo(config, token, layout_id, grupo)
+
         else:
             logging.warning(f"No se pudo obtener la receta de {nombre}")
     logging.info("Ciclo de lectura terminado.")

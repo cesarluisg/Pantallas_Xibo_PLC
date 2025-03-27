@@ -38,7 +38,7 @@ def buscar_layout_por_etiquetas(config, token, grupo_pantallas, receta):
             tags = [t['tag'] for t in layout.get("tags", [])]
             if grupo_pantallas in tags and receta in tags:
 
-                logging.info(f"Layout encontrado: ID {layout['layoutId']} - {layout['name']}")
+                logging.info(f"Layout encontrado: ID {layout['layoutId']} - {layout['layout']}")
                 return layout["layoutId"]
 
         logging.warning(f"No se encontró layout con tags: {grupo_pantallas} y {receta}")
@@ -48,27 +48,45 @@ def buscar_layout_por_etiquetas(config, token, grupo_pantallas, receta):
         logging.exception("Error al buscar layouts en Xibo.")
         return None
 
-def asignar_layout_a_grupo(config, token, layout_id, display_group_id):
+def crear_evento_layout_para_grupo(config, token, layout_id, grupo_pantallas):
     base_url = config['xibo']['base_url']
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
 
+    # Paso 1: buscar el ID del grupo de pantallas por nombre
+    try:
+        response = requests.get(f"{base_url}/api/displaygroup", headers=headers)
+        response.raise_for_status()
+        grupos = response.json()
+        grupo = next((g for g in grupos if g['displayGroup'] == grupo_pantallas), None)
+
+        if not grupo:
+            logging.warning(f"No se encontró el grupo de pantallas con nombre: {grupo_pantallas}")
+            return False
+
+        grupo_id = grupo['displayGroupId']
+    except Exception as e:
+        logging.exception("Error al buscar grupo de pantallas.")
+        return False
+
+    # Paso 2: crear el evento "para siempre"
     payload = {
-        "eventTypeId": 1,
+        "eventTypeId": 1,  # Evento de tipo layout
         "isPriority": 0,
-        "displayGroupIds": [display_group_id],
-        "fromDt": int(time.time()),
-        "toDt": int(time.time()) + 10 * 365 * 24 * 60 * 60,
+        "displayGroupIds": [grupo_id],
+        "fromDt": 0,
+        "toDt": 2147483647,
+        "isAlways": 1,
         "layoutId": layout_id
     }
 
     try:
         response = requests.post(f"{base_url}/api/schedule", headers=headers, json=payload)
         response.raise_for_status()
-        logging.info(f"Layout {layout_id} asignado al grupo {display_group_id} con reproducción infinita.")
+        logging.info(f"Evento creado: layout {layout_id} → grupo '{grupo_pantallas}' (ID {grupo_id})")
         return True
     except Exception as e:
-        logging.exception("Error al asignar layout a grupo.")
+        logging.exception("Error al crear evento de layout.")
         return False
