@@ -4,11 +4,6 @@
       "base_url": "http://192.168.0.14",
       "client_id": "0ba12753c21a8afffa2f7ca22d8f2ed4786683a3",
       "client_secret": "be44e830a2f627d7bd002632c697895873683562ef550d57d2ed2d3052362dce86470809c2e2eac58ca86ecfede440d2602134bff2507277203cfe4f1dd956e97b2869899ded79f766a740a6273a29f644d52bc4d3288bf9563bfbf95ee2236b5b09bd6388e5d8b1a0c328d01f4e2438e7a40ce4060c3099ea1733463598f7"
-    },
-    "plc": {
-      "db_numero": 44,
-      "direccion_byte": 560,
-      "longitud": 66
     }
-  }
+}
   

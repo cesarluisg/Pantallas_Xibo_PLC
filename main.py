@@ -61,6 +61,7 @@ def ciclo_de_lectura(config, lista_plcs):
 
         logging.info(f"Procesando {nombre} en {ip} (grupo {grupo})")
         receta_actual = leer_receta_desde_plc(ip, db, offset, longitud)
+        logging.info(f"Leyendo de PLC: DB={db}, offset={offset}, longitud={longitud})")
         if not receta_actual:
             logging.warning(f"No se pudo obtener la receta de {nombre}")
             continue
