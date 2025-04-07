@@ -10,6 +10,9 @@
     "user": "cms",
     "password": "Rubol-1234!",
     "database": "xibo_app"
+  },
+  "persistencia": {
+    "modo": "db"
   }
 }
   
