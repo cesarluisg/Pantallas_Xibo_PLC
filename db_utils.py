@@ -1,6 +1,6 @@
 # db_utils.py
 import mysql.connector
-import logging
+from logger_config import logger
 
 def get_db_connection(config):
     """
@@ -9,14 +9,16 @@ def get_db_connection(config):
     """
     try:
         conn = mysql.connector.connect(
-            host=config["db"]["host"],
-            user=config["db"]["user"],
-            password=config["db"]["password"],
-            database=config["db"]["database"]
+            host=config["host"],
+            user=config["user"],
+            port=3308,
+            password=config["password"],
+            database=config["database"],
+            charset='utf8mb4'
         )
         return conn
     except Exception as e:
-        logging.error(f"Error al conectar con la base de datos: {e}")
+        logger.error(f"Error al conectar con la base de datos: {e}")
         return None
 
 def cargar_estado_actual(config, plcs_validos):
@@ -27,7 +29,7 @@ def cargar_estado_actual(config, plcs_validos):
     """
     conn = get_db_connection(config)
     if not conn:
-        logging.error("No se pudo obtener conexión a la base de datos. Se devuelve estado vacío.")
+        logger.error("No se pudo obtener conexión a la base de datos. Se devuelve estado vacío.")
         return {}
 
     estado = {}
@@ -41,7 +43,7 @@ def cargar_estado_actual(config, plcs_validos):
             if plc_name in plcs_validos:
                 estado[plc_name] = receta
     except Exception as e:
-        logging.error(f"Error al consultar la tabla plc_state: {e}")
+        logger.error(f"Error al consultar la tabla plc_state: {e}")
     finally:
         cursor.close()
         conn.close()
@@ -62,7 +64,7 @@ def guardar_estado_actual(config, estado):
     """
     conn = get_db_connection(config)
     if not conn:
-        logging.error("No se pudo obtener conexión a la base de datos. No se guarda el estado.")
+        logger.error("No se pudo obtener conexión a la base de datos. No se guarda el estado.")
         return
 
     try:
@@ -76,7 +78,7 @@ def guardar_estado_actual(config, estado):
             cursor.execute(sql, (plc_name, receta))
         conn.commit()
     except Exception as e:
-        logging.error(f"Error al guardar estado en la tabla plc_state: {e}")
+        logger.error(f"Error al guardar estado en la tabla plc_state: {e}")
     finally:
         cursor.close()
         conn.close()

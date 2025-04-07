@@ -1,7 +1,7 @@
 # xibo_utils.py
 from datetime import datetime, timedelta
 import requests
-import logging
+from logger_config import logger
 
 class XiboManager:
     def __init__(self, xibo_config):
@@ -21,7 +21,7 @@ class XiboManager:
         self.LAYOUT_ENDPOINT = "/api/layout"
         self.DISPLAYGROUP_ENDPOINT = "/api/displaygroup"
         self.SCHEDULE_ENDPOINT = "/api/schedule"
-        logging.info("XiboManager inicializado.")
+        logger.info("XiboManager inicializado.")
 
     def obtener_token(self):
         """
@@ -36,10 +36,10 @@ class XiboManager:
             response = requests.post(f"{self.base_url}{self.AUTH_ENDPOINT}", data=payload)
             response.raise_for_status()
             self.token = response.json().get("access_token")
-            logging.info("Token de Xibo obtenido correctamente.")
+            logger.info("Token de Xibo obtenido correctamente.")
             return self.token
         except Exception as e:
-            logging.exception("Error al obtener el token de Xibo.")
+            logger.exception("Error al obtener el token de Xibo.")
             return None
 
     def buscar_layout_por_etiquetas(self, grupo_pantallas, receta):
@@ -48,7 +48,7 @@ class XiboManager:
         Devuelve el campaignId del layout si lo encuentra, o None en caso contrario.
         """
         if not self.token:
-            logging.error("Token no disponible para buscar layouts.")
+            logger.error("Token no disponible para buscar layouts.")
             return None
 
         headers = {"Authorization": f"Bearer {self.token}"}
@@ -57,10 +57,10 @@ class XiboManager:
             response.raise_for_status()
             layouts = response.json()
 
-            logging.info("Buscando layout con los tags:")
-            logging.info(f"  - Grupo de pantallas: {grupo_pantallas}")
-            logging.info(f"  - Receta: {receta}")
-            logging.info("-" * 80)
+            logger.info("Buscando layout con los tags:")
+            logger.info(f"  - Grupo de pantallas: {grupo_pantallas}")
+            logger.info(f"  - Receta: {receta}")
+            logger.info("-" * 80)
 
             for layout in layouts:
                 layout_id = layout.get("layoutId")
@@ -68,19 +68,19 @@ class XiboManager:
                 campaign_id = layout.get("campaignId")
                 tags = [t['tag'] for t in layout.get("tags", [])]
 
-                logging.info(f"LayoutID: {layout_id}, CampaignID: {campaign_id}, Nombre: {layout_name}, Tags: {tags}")
+                logger.info(f"LayoutID: {layout_id}, CampaignID: {campaign_id}, Nombre: {layout_name}, Tags: {tags}")
 
                 if grupo_pantallas in tags and receta in tags:
-                    logging.info("-" * 80)
-                    logging.info(f"Layout seleccionado → LayoutID: {layout_id}  CampaignID: {campaign_id}  Nombre: '{layout_name}'")
+                    logger.info("-" * 80)
+                    logger.info(f"Layout seleccionado → LayoutID: {layout_id}  CampaignID: {campaign_id}  Nombre: '{layout_name}'")
                     return campaign_id
 
-            logging.info("-" * 80)
-            logging.info("No se encontró ningún layout con ambos tags.")
+            logger.info("-" * 80)
+            logger.info("No se encontró ningún layout con ambos tags.")
             return None
 
         except Exception as e:
-            logging.exception("Error al buscar layouts en Xibo.")
+            logger.exception("Error al buscar layouts en Xibo.")
             return None
 
     def crear_evento_layout_para_grupo(self, layout_id, grupo_pantallas):
@@ -88,7 +88,7 @@ class XiboManager:
         Crea un evento para el layout (campaign) especificado en el grupo de pantallas dado.
         """
         if not self.token:
-            logging.error("Token no disponible para crear evento.")
+            logger.error("Token no disponible para crear evento.")
             return False
 
         headers = {
@@ -103,12 +103,12 @@ class XiboManager:
             grupo = next((g for g in grupos if g['displayGroup'] == grupo_pantallas), None)
 
             if not grupo:
-                logging.warning(f"No se encontró el grupo de pantallas con nombre: {grupo_pantallas}")
+                logger.warning(f"No se encontró el grupo de pantallas con nombre: {grupo_pantallas}")
                 return False
 
             grupo_id = grupo['displayGroupId']
         except Exception as e:
-            logging.exception("Error al buscar grupo de pantallas.")
+            logger.exception("Error al buscar grupo de pantallas.")
             return False
 
         # Paso 2: Crear el evento "para siempre" (configurado, por ejemplo, para 1 año)
@@ -128,12 +128,12 @@ class XiboManager:
         try:
             response = requests.post(f"{self.base_url}{self.SCHEDULE_ENDPOINT}", headers=headers, json=payload)
             response.raise_for_status()
-            logging.info(f"Evento creado: layout {layout_id} → grupo '{grupo_pantallas}' (ID {grupo_id})")
+            logger.info(f"Evento creado: layout {layout_id} → grupo '{grupo_pantallas}' (ID {grupo_id})")
             return True
         except Exception as e:
-            logging.error("Error al crear evento de layout.")
-            logging.error(f"Status code: {response.status_code}")
-            logging.error(f"Respuesta de Xibo: {response.text}")
+            logger.error("Error al crear evento de layout.")
+            logger.error(f"Status code: {response.status_code}")
+            logger.error(f"Respuesta de Xibo: {response.text}")
             return False
 
     def esta_corriendo_layout_en_grupo_ahora(self, grupo_pantallas, layout_id):
@@ -142,7 +142,7 @@ class XiboManager:
         Retorna True si se encuentra activo, False en caso contrario.
         """
         if not self.token:
-            logging.error("Token no disponible para consultar eventos.")
+            logger.error("Token no disponible para consultar eventos.")
             return False
 
         headers = {"Authorization": f"Bearer {self.token}"}
@@ -154,7 +154,7 @@ class XiboManager:
             grupos = resp_grupos.json()
             grupo = next((g for g in grupos if g['displayGroup'] == grupo_pantallas), None)
             if not grupo:
-                logging.warning(f"No se encontró el grupo de pantallas con nombre: {grupo_pantallas}")
+                logger.warning(f"No se encontró el grupo de pantallas con nombre: {grupo_pantallas}")
                 return False
             grupo_id = grupo['displayGroupId']
 
@@ -175,5 +175,5 @@ class XiboManager:
             return False
 
         except Exception as e:
-            logging.exception("Error al consultar eventos actuales para el grupo.")
+            logger.exception("Error al consultar eventos actuales para el grupo.")
             return False

@@ -5,7 +5,8 @@ print("Fecha: 2025-03-24")
 
 import time
 import json
-import logging
+
+from custom_logger import setup_custom_logger
 
 from plc_utils import PLCManager
 
@@ -13,48 +14,49 @@ from xibo_utils import XiboManager
 
 from persis_utils import PersistenceManager
 
-# Configuración del log: se escribe en archivo y también se muestra por consola
-LOG_FILE = 'main.log'
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.FileHandler(LOG_FILE, mode='a', encoding='utf-8'),
-        logging.StreamHandler()
-    ]
-)
+from logger_config import logger
+
+#logging.basicConfig(
+#    level=logging.INFO,
+#    format='%(asctime)s [%(levelname)s] %(message)s',
+#    handlers=[
+#        logging.FileHandler(LOG_FILE, mode='a', encoding='utf-8'),
+#        logging.StreamHandler()
+#    ]
+#)
+
 
 def cargar_config():
     try:
         with open('config.json', 'r') as f:
             config = json.load(f)
-            logging.info("Configuración cargada correctamente.")
+            logger.info("Configuración cargada correctamente.")
             return config
     except Exception as e:
-        logging.exception("Error al cargar config.json")
+        logger.exception("Error al cargar config.json")
         return None
 
 def ciclo_de_lectura(plc_manager, persistence_manager, xibo_manager):
     # Obtener el token de Xibo
     token = xibo_manager.obtener_token()
     if not token:
-        logging.error("No se pudo obtener el token de Xibo, abortando el ciclo.")
+        logger.error("No se pudo obtener el token de Xibo, abortando el ciclo.")
         return
 
-    logging.info("Inicio de ciclo de lectura.")
+    logger.info("Inicio de ciclo de lectura.")
 
     # Iterar sobre cada PLC configurado
     for plc in plc_manager.plcs:
         nombre = plc.get('nombre')
         grupo = plc.get('grupo_pantallas')
-        logging.info(f"Procesando PLC: {nombre} (Grupo: {grupo})")
+        logger.info(f"Procesando PLC: {nombre} (Grupo: {grupo})")
 
         # Leer la receta actual desde el PLC
         receta_actual = plc_manager.leer_receta(plc)
-        logging.info(f"Receta actual en {nombre}: {receta_actual}")
+        logger.info(f"Receta actual en {nombre}: {receta_actual}")
 
         if not receta_actual:
-            logging.warning(f"No se pudo obtener la receta para {nombre}")
+            logger.warning(f"No se pudo obtener la receta para {nombre}")
             continue
 
         # Actualizar el estado del PLC individualmente usando PersistenceManager
@@ -66,11 +68,11 @@ def ciclo_de_lectura(plc_manager, persistence_manager, xibo_manager):
             if not xibo_manager.esta_corriendo_layout_en_grupo_ahora(grupo, layout_id):
                 xibo_manager.crear_evento_layout_para_grupo(layout_id, grupo)
             else:
-                logging.info(f"El layout/campaña {layout_id} ya está corriendo en el grupo '{grupo}'.")
+                logger.info(f"El layout/campaña {layout_id} ya está corriendo en el grupo '{grupo}'.")
         else:
-            logging.warning(f"No se encontró layout para {nombre} con receta {receta_actual}.")
+            logger.warning(f"No se encontró layout para {nombre} con receta {receta_actual}.")
 
-    logging.info("Ciclo de lectura terminado.")
+    logger.info("Ciclo de lectura terminado.")
 
 def main():
     full_config = cargar_config()
@@ -90,7 +92,7 @@ def main():
         try:
             ciclo_de_lectura(plc_manager, persistence_manager, xibo_manager)
         except Exception as e:
-            logging.exception("Error durante el ciclo de lectura.")
+            logger.exception("Error durante el ciclo de lectura.")
         time.sleep(intervalo)
 
 if __name__ == "__main__":
