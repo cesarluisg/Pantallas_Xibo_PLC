@@ -6,8 +6,6 @@ print("Fecha: 2025-03-24")
 import time
 import json
 
-from custom_logger import setup_custom_logger
-
 from plc_utils import PLCManager
 
 from xibo_utils import XiboManager
@@ -15,6 +13,9 @@ from xibo_utils import XiboManager
 from persis_utils import PersistenceManager
 
 from logger_config import logger
+
+from docker_restart import restart_xibo_containers
+
 
 #logging.basicConfig(
 #    level=logging.INFO,
@@ -86,6 +87,14 @@ def main():
     persistence_manager = PersistenceManager(persist_config)
     plc_manager = PLCManager("plcs_config.json")
     xibo_manager = XiboManager(xibo_config)
+
+    #Reiniciar contenedor para que arranque bien
+    logger.info("Reiniciando Contenedor Xibo")
+    restart_xibo_containers()
+
+    #esperar que arranque el contenedor
+    logger.info("Esperando Reinicio de Contenedor Xibo")
+    time.sleep(30)
 
 
     while True:
