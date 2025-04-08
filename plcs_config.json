@@ -2,7 +2,7 @@
     {
       "nombre": "PLC_CYM_1",
       "ip": "192.168.1.10",
-      "grupo_pantallas": "CYM_1",
+      "grupo_pantallas": "CYM1",
       "db_numero": 44,
       "db_offset": 560,
       "longitud": 66

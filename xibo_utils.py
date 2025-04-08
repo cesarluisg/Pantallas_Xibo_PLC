@@ -50,13 +50,12 @@ class XiboManager:
         if not self.token:
             logger.error("Token no disponible para buscar layouts.")
             return None
-
+        print(f"tipo de dato receta: {type(receta)} tipo grupo: {type(grupo_pantallas)}")  
         headers = {"Authorization": f"Bearer {self.token}"}
         try:
             response = requests.get(f"{self.base_url}{self.LAYOUT_ENDPOINT}", headers=headers)
             response.raise_for_status()
             layouts = response.json()
-
             logger.info("Buscando layout con los tags:")
             logger.info(f"  - Grupo de pantallas: {grupo_pantallas}")
             logger.info(f"  - Receta: {receta}")
@@ -69,7 +68,6 @@ class XiboManager:
                 tags = [t['tag'] for t in layout.get("tags", [])]
 
                 logger.info(f"LayoutID: {layout_id}, CampaignID: {campaign_id}, Nombre: {layout_name}, Tags: {tags}")
-
                 if grupo_pantallas in tags and receta in tags:
                     logger.info("-" * 80)
                     logger.info(f"Layout seleccionado → LayoutID: {layout_id}  CampaignID: {campaign_id}  Nombre: '{layout_name}'")
