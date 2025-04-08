@@ -90,11 +90,11 @@ def main():
 
     #Reiniciar contenedor para que arranque bien
     logger.info("Reiniciando Contenedor Xibo")
-    #restart_xibo_containers()
+    restart_xibo_containers()
 
     #esperar que arranque el contenedor
     logger.info("Esperando Reinicio de Contenedor Xibo")
-    #time.sleep(30)
+    time.sleep(30)
 
 
     while True:
